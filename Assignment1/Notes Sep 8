@@ -1,0 +1,42 @@
+
+
+Processes
+
+A process is an active program in execution
+	Requires CPU time ,memory, file access, network access and other IO access
+
+OS
+	creates /deletes processes
+	schedule processs with the CPU
+	schedules processes with I/O subsystems
+	allocates resources to processes
+	sychronize communication between processes
+
+Process Space
+	for each process, the OS manages and executes , keeping track of the following.
+
+		Program counters 
+		Registers 
+		stacks
+
+
+process creation
+
+	int main(){
+		int x=5;
+		pid_t pid; // process id (int)
+		pid=fork(); // will return twice --> parent and child
+		if(pid<0){
+			perror("forl failed");
+			return EXIT_FAILURE;
+		}
+		//int x=5;
+		//fork will fail if it has not enough memory 
+		// sometimes the resource limit is more and hence unable to fork the new process
+		if(pid==0){
+			printf("child happy birthday");
+			s
+		}
+
+
+	}
