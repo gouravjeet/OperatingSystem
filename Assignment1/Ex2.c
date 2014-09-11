@@ -13,8 +13,7 @@ void square(int x){
    		x=x*x;
    		printf("%d",x);
    	}
-
-char *trimwhitespace(char *str)
+char *trimwhitespace(char *str)															//trim whitespace function
 {
   char *end;
 
@@ -33,10 +32,7 @@ char *trimwhitespace(char *str)
 
   return str;
 }
-
-
 int main(){
-
    		char *choice;
    		char *path[100],*path_temp;
    		char *args[100], *args_temp;
@@ -44,10 +40,9 @@ int main(){
    		bool historyflag=false;
    		char paths[100];
    		int history_index=0,numbering_index=0;
-
    		DIR * dir[100];
    		int args_len =0, path_len=0;
-	    while(1){
+	    while(1){																		//infinite while loop starting
 			args_len = 0;
 			path_len=0;
 			printf("sardarKaShell-1.0-$ ");
@@ -60,12 +55,11 @@ int main(){
 			   	path_len++;
 			   	path_temp = strtok(NULL,":");
 			}
-			int s;													//		   ||->->->-> ->->->->|
-			fgets(choice,1000,stdin);								//  |2| 3| 4| 5| 6| 7| 8| 9|  v
-			if(history_index==10){									    //  ->  -> ->				  |   
-														//	^						  V
+			int s;													
+			fgets(choice,1000,stdin);												//history command implementation								
+			if(history_index==10){									     
 				historyflag=true;
-				history_index=0;									//  |<-<- <-<- <-<- <-<- <-<- V
+				history_index=0;									
 				strcpy(history[history_index],choice);	
 				history_index++;
 			}	
@@ -73,7 +67,7 @@ int main(){
 				strcpy(history[history_index],choice);	
 				history_index++;
 			}   
-			// exit and quit functionality
+																					// exit and quit functionality
 			if(strncmp(choice,"exit",4)==0 || strncmp(choice,"quit",4)==0){
 			printf("bye\n");
 			exit(1);
@@ -87,8 +81,7 @@ int main(){
 			args[args_len] = NULL;
 			args_len ++;
 			struct dirent * file;
-
-			// history 
+																				// history printing 
 			if(strncmp(args[0],"history",7)==0){
 				
 		   		if(historyflag==true){
@@ -110,7 +103,7 @@ int main(){
 		   		}
 		   		continue;	
 			}
-		   // checking for paramater to verify the arguments
+		   // checking for paramater to verify the arguments                     
 			for(int i=0;i<path_len;i++){
 				dir[i] = opendir( path[i] );
 				while ( ( file = readdir( dir [i]) ) != NULL )
@@ -118,12 +111,11 @@ int main(){
 				    if(strncmp(file->d_name,args[0],args_len)==0){	
 				    	break;
 			   		} 
-			     
 				}
 				if(file==NULL){
 			    	
 				}
-				else{
+				else{														//checking various commands in /bin folder
 					printf( "found %s\n", file->d_name );
 					strcpy(paths,path[0]);
 					strcat(paths,"/");
@@ -134,7 +126,7 @@ int main(){
 			}	//for 	
 			pid_t pid;  
 			// printf( "abc");	  
-			pid = fork(); 
+			pid = fork(); 													//forking a process
 			if(pid<0){
 				printf("error !!");
 			}	
