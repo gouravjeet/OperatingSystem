@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdio.h>
@@ -8,6 +7,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include <ctype.h>
+#include <stdarg.h>
 
 void square(int x){
    		x=x*x;
@@ -55,6 +56,53 @@ void forkMethod(char *args[100],char paths[100],int args_len){
 			//printf("terminated");
 		}		 		 
 }
+void cdProcessing(char *args[100],char paths[100],int args_len){
+														// change the directory  we need to provide it with a new path
+	
+	printf("%s\n", args[1]);
+	char *directory = args[1];
+	int ret;
+	ret = chdir (directory);
+	if (ret ==0) 										// to check that chdir() is working or not//
+		printf("Your current directory is %s\n",args[1] );
+	else
+		printf("%s\n","Directory doesnot exists");
+}
+void runExclamationCommand(char *args[100],char paths[100],int args_len){
+	// run the command with ! followed either by the name of command or by the number of the command
+	printf("%s\n","run exclamation" );
+	char command[100];
+	char cmd[100];
+	sscanf(args[0] ,"!%s ", command);
+
+	printf("%s\n", command);
+	
+	if(isdigit(command[0])){								// integer
+		int num = atoi(command);
+		printf("%d\n", num);
+		args[0]=command;
+	}
+	else if(isalpha(command[0])){								//string
+		//printf("%s\n", command);
+		args[0]=command;
+		printf("%s\n",args[0]);
+		printf("%d\n", args_len);
+		
+		forkMethod(args,paths,args_len);
+	}
+	
+}
+void BackgroundProcesses(char *args[100],char paths[100],int args_len){
+	// user should execute a process in the background if user enters & at the end of the command
+}
+void Redirection(char *args[100],char paths[100],int args_len){
+	// Redirect the stdin and stdout to a file
+}
+void IPCPipes(char *args[100],char paths[100],int args_len){
+	// output from a process A  is the input to process B
+}
+
+
 void historyPrinting(char history[1000][1000],int history_index, int numbering_index,bool historyflag){
 	numbering_index=0;	
 	   		if(historyflag==true){
@@ -154,7 +202,7 @@ int main(){
 				strcpy(history[history_index],choice);	
 				history_index++;
 			}   
-																					// exit and quit functionality
+
 			if(strncmp(choice,"exit",4)==0 || strncmp(choice,"quit",4)==0){
 			printf("bye\n");
 			exit(1);
@@ -168,6 +216,7 @@ int main(){
 			args[args_len] = NULL;
 			args_len ++;
 			struct dirent * file;
+			
 																				
 			if(strncmp(args[0],"history",7)==0){										// history printing 
 				historyPrinting(history,history_index, numbering_index,historyflag);
@@ -188,19 +237,38 @@ int main(){
 								args[i] = trimwhitespace(args[i]);
 							}
 						} 
+			    	if(strncmp(args[0],"cd",2)==0){		
+		    			//printf( "found %s\n", args[1] );									// cd command 
+						cdProcessing(args,paths,args_len);
+						continue;	
+					}
+					if(strncmp(args[0],"!",1)==0){		
+		    			printf( "found %s\n", args[0] );									// Exclamation command 
+						runExclamationCommand(args,paths,args_len);
+						continue;	
+					}	
+
 			    	printf("ERROR: command %s not found\n", args[0]);
 			    	
 				}
-				else{														//checking various commands in /bin folder
+				else{
+						
+
+																			//checking various commands in /bin folder
 					printf( "found %s\n", file->d_name );
 					strcpy(paths,path[0]);
 					strcat(paths,"/");
 					strcat(paths,file->d_name);
 					//printf( "%s", paths);	
+
 					forkMethod(args,paths,args_len);
+
 				}
 
-			}	//for 	
+
+			}	//for 
+
+		
 			
    }//while(1)
 }// main 

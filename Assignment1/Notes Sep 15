@@ -1,0 +1,40 @@
+
+use $MPATH
+
+--parsing the $MYPATH env variable and use lstat() to see if thte command exists
+-- no need to support users changing this in shell
+eg if the user enters "ls -al"
+	lstat will provide the information about the file pointed by the path
+	chdir will change the directory
+	mkdir will make the direcory
+
+
+
+	PIPE program
+
+
+	int main(){
+		int p[2];						// array to hold the two pipe file descriptors 
+		int rc=pipe(p);
+		if(rc<0){
+			perror("pipe() failed");
+			return EXIT_FAILURE;
+		}
+		return EXIT_SUCCESS;
+
+	}
+	int pid=fork();   // this will copy fd table to child
+	int bytes_written=write(p[1],"ABCDEFGHIJKLMNO",10);
+	printf("Wrote %d bytes",bytes_written); 			// read calls are blocking calls
+	char buffer[10];
+	int bytes_read=read(p[0],buffer,6);
+
+	// ensure that no reads are done in the child 
+	and 
+	close(p[0]);
+
+
+	if we redirect stdout to another desscriptor, to restore stdout
+	, copy stdout in the first place via dup2 to some other descriptor , then copy it back
+	
+
