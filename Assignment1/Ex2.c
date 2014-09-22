@@ -123,41 +123,33 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 		forkMethod(args,paths,args_len);
 	}	
 }
-void historyChecking(char history[1000][1000], int index){
-	char cmd[100];
+void historyChecking(char history[1000][1000], int *history_index,char *choice,bool historyflag){
 	
-}
-void PreArgsProcessing(char *args[100],char paths[100],int args_len){
-	fgets(choice,1000,stdin);												//history command implementation								
-			if(history_index==1000){									     
-				historyflag=true;
-				history_index=0;									
-				strcpy(history[history_index],choice);	
-				history_index++;
-			}	
-			else{
-				strcpy(history[history_index],choice);	
-				history_index++;
-			}   
-			// History is calculated here, so at each step, cmd are added to the history array so that we can get that later on
+	// History is calculated here, so at each step, cmd are added to the history array so that we can get that later on
 			//===========================================================================================================
-			// if(strncmp(choice,"exit",4)==0 || strncmp(choice,"quit",4)==0){    // exit or bye
-			// 	printf("bye\n");
-			// 	exit(1);
-			// }
-			// exit and quit keyword for quitting the program
-			//============================================================================================================
-			// Different arguments are prepared by tokenising that can be used later
+	if(*history_index==1000){									     
+				historyflag=true;
+				*history_index=0;									
+				strcpy(history[*history_index],choice);	
+				*history_index=*history_index+1;
+			}	
+	else{
+		strcpy(history[*history_index],choice);	
+		*history_index=*history_index+1;
+	}   
+
+}
+void PreArgsProcessing(char *args[100],char paths[100],int *args_len,char *choice,char *args_temp){							
+			// Different arguments are prepared by tokenising that can be used later	
 			args_temp=strtok(choice," ");
 			while(args_temp != NULL){
-				args[args_len] = args_temp;		
-				args_len++;
+				args[*args_len] = args_temp;		
+				*args_len=*args_len+1;
 				args_temp=strtok(NULL," ");		
 			}
-			args[args_len] = NULL;
-			args_len ++;
+			args[*args_len] = NULL;
+			*args_len=*args_len+1;
 }
-
 void BackgroundProcesses(char *args[100],char paths[100],int args_len){
 	printf("%s\n", "background process");
 	// user should execute a process in the background if user enters & at the end of the command
@@ -169,48 +161,54 @@ void Redirection(char *args[100],char paths[100],int args_len){
 		 // closes fd-0
 		 // open a file with fd 0
 		 // child process and by default it reads from stdin ie fd-0
+	char temp2[100];
+	char temp_buffer[100];
+	printf("%d\n", args_len);
 	for(int i=0;i<args_len-1;i++){
 		if(strncmp(args[i],"<",1)==0){
-			printf("%s\n", "<");
+			printf("Redirect from file.\n");
 			int fd_stored=dup(0);
+			printf("%s\n","Here" );
 			close(0);
-			int fname=0;
-			fname=open("a.txt",O_RDONLY,0660); //filename
+			int fname;
+			printf("%s\n",args[i+1] );
+
+			fname=open(args[i+1],O_RDONLY,0660); //filename
+			printf("%d\n",fname);
 			char temp_buffer[100];
 			int fileSize=read(fname,temp_buffer,100);
 			char* temp[100];
-			char[100] temp2;
+			
 			// create a copy of args and then update it with the new value --> cmd1 args and then run it using execv
-			strcpy(args[0],temp);
+			//strcpy(args[0],temp);
 			for(int k=i;k<args_len-2;k++){   //set arguments after < equal to null
 				args[k]=NULL;
 			}
-
-			for(int j=0;j<i;j++){
-				strcat(temp2,args[j]);
-				strcat(temp2," ");
-			}
-			strcat(temp2,temp_buffer);
-			strcpy(choice,temp2);
-
-			if(fork()==0){
-				execv(paths,args);
-			}
+			// for(int j=0;j<i;j++){
+			// 	strcat(temp2,args[j]);
+			// 	strcat(temp2," ");
+			// }
+			// strcat(temp2,temp_buffer);
+			// strcpy(choice,temp2);
+			// PreArgsProcessing(&args,&paths,args_len,&choice);
+			// if(fork()==0){
+			// 	//execv(paths,args);
+			// }
 		}
 			// case 2: cmd1 >> stdout.txt  append the response of the command 1 to teh text file
 		else if(strncmp(args[i],">>",2)==0){
-			printf("%s\n", ">>");
+			printf("%s\n", "Append to file");
 		}
 			// case 3 : cmd2 > stdout.text  override the response of the command 1 to the text file
 			// paths[0] paths[1] paths[2]
 			     // first release fd 1 and then open a file with fd 1 and then open a child process and 
 			     // then the program writes to stdout ie fd 1 and hence in this case it is file 
 		else if(strncmp(args[i],">",1)==0){
-	 		printf("%s\n",">" );
+	 		printf("Redirect to file.\n");
 	 		// close(1);
 	 		// //open(args[2],"w");
 	 		// if(fork()==0){ // child process
-	 		// //	exec(cmd);
+	 		// //	execv();
 	 		// }
 		 }
 	}	
@@ -299,8 +297,6 @@ int main(){
 			path_temp=getenv("MYPATH");
 			path_temp=strtok(path_temp,":");
 			
-
-
 			while(path_temp!=NULL)  									// tokenizing paths ie different paths separated by : 
 			{
 			   	path[path_len]=path_temp;
@@ -308,39 +304,10 @@ int main(){
 			   	path_temp = strtok(NULL,":");
 			}
 			int s;
-			PreArgsProcessing(args,paths,args_len);
-			//==========================================================================================================												
-			fgets(choice,1000,stdin);												//history command implementation								
-			if(history_index==1000){									     
-				historyflag=true;
-				history_index=0;									
-				strcpy(history[history_index],choice);	
-				history_index++;
-			}	
-			else{
-				strcpy(history[history_index],choice);	
-				history_index++;
-			}   
-			// History is calculated here, so at each step, cmd are added to the history array so that we can get that later on
-			//===========================================================================================================
-			// if(strncmp(choice,"exit",4)==0 || strncmp(choice,"quit",4)==0){    // exit or bye
-			// 	printf("bye\n");
-			// 	exit(1);
-			// }
-			// exit and quit keyword for quitting the program
-			//============================================================================================================
-			// Different arguments are prepared by tokenising that can be used later
-			args_temp=strtok(choice," ");
-			while(args_temp != NULL){
-				args[args_len] = args_temp;		
-				args_len++;
-				args_temp=strtok(NULL," ");		
-			}
-			args[args_len] = NULL;
-			args_len ++;
+			fgets(choice,1000,stdin);
+			PreArgsProcessing(args,paths,&args_len,choice,args_temp);
+			historyChecking(history,&history_index,choice, historyflag);
 			struct dirent * file;
-			//=============================================================================================================
-			
 			//================================================================================================================
 																				
 			if(strncmp(args[0],"history",7)==0){										// history printing 
@@ -353,10 +320,8 @@ int main(){
 				exit(0);
 			}
 			// checking for various commands
-		   	//printf("%d\n",args_len );
 			for(int i=0;i<args_len-1;i++){
 				if(strncmp(args[i],"<",1)==0 || strncmp(args[i],">",1)==0 || strncmp(args[i],">>",2)==0){  // redirection
-					printf("in redirection ");
 					Redirection(args,paths,args_len);
 					flag=1;
 					continue;
