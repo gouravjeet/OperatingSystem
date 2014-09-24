@@ -15,7 +15,18 @@ void square(int x){
    		x=x*x;
    		printf("%d",x);
    	}
-
+int check_file(char * fileName){ 
+	struct stat buf; 
+	int rc = lstat(fileName, &buf );  
+	if ( S_ISREG( buf.st_mode ) ) {
+		if ( buf.st_mode & ( S_IXUSR | S_IXGRP | S_IXOTH ) ){ 
+			return 1; 
+		} 
+		else{ 
+			return 0; 
+		}
+	}
+}		
 
 char *trimwhitespace(char *str)
 {
@@ -113,11 +124,13 @@ void historyChecking(char history[1000][1000], int *history_index,char *choice,b
 			//===========================================================================================================
 	if(*history_index==1000){									     
 				historyflag=true;
-				*history_index=0;									
+				*history_index=0;
+				printf("choice is %s\n", choice);									
 				strcpy(history[*history_index],choice);	
 				*history_index=*history_index+1;
 			}	
 	else{
+		printf("choice is %s\n", choice);	
 		strcpy(history[*history_index],choice);	
 		*history_index=*history_index+1;
 	}   
@@ -160,16 +173,25 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 	else if(isalpha(command[0])){								//string
 		//printf("%s\n", command);
 		args[0]=command;
-		//printf("%s\n",args[0]);
+		printf("%s\n",args[0]);
 		strcpy(temp4,args[0]);
-		printf("%d\n", args_len);
-		for(int o=0;0<args_len-2;o++){
+		strcat(temp4," ");
+		printf("%d\n",args_len);
+		printf("%s\n",temp4);
+		for(int o=1;o<args_len-2;o++){
 			strcat(temp4,args[o]);
 			strcat(temp4," ");
+			printf("in loop%s\n",temp4);
 		}
+		if(args_len>2){
+			strcat(temp4,args[args_len-2]);
+		}
+		
+		printf("out of the loop%s\n",temp4);
 		strcpy(choice,temp4);
 		choice=trimwhitespace(choice);
 		PreArgsProcessing(args,paths,&args_len,choice,args_temp);
+		printf("Exclamation choice is %s\n",choice );
 		//forkMethod(args,paths,args_len);
 	}	
 }
@@ -242,11 +264,13 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 		else if(strncmp(args[i],">>",2)==0){
 			printf("Append to file");
 			*flag_to=1;
-			int dv=dup(1);
+			int dm=dup(1);
 			char * b;
-			
+			int h;
 			//close(1);
-			open(args[i+1],O_RDWR | O_CREAT, 0660);
+			h=open(args[i+1],O_APPEND | O_CREAT, 0660);
+			dup2(h,1);
+			close(h);
 			pid_t pid;  
 			//printf( "abc");
 			// strcpy(temp3, args[0]);
@@ -279,7 +303,8 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 				int status;
 				int termChild = wait(&status);
 				//printf("terminated");
-				dup2(dv,1);
+				dup2(dm,1);
+				close(dm);
 			}
 			return;								
 		}
@@ -292,9 +317,13 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 	 		printf("Redirect to file");
 			int dv=dup(1);
 			char * b;
-			
+			int z;
 			//close(1);
-			open(args[i+1],O_RDWR | O_CREAT, 0660);
+
+			z=open(args[i+1],O_RDWR | O_CREAT, 0660);
+			printf("fd is %d\n",z );
+			dup2(z,1);
+			close(z);
 			pid_t pid;  
 			strcpy(temp3, args[0]);
 			strcat(temp3, " ");
@@ -319,6 +348,7 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 					}
 				}
 				execv(paths, args);
+				printf("ahmed");
 			}
 			else{
 				printf("parent\n");
@@ -326,6 +356,7 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 				int termChild = wait(&status);
 				//printf("terminated");
 				dup2(dv,1);
+				close(dv);
 			}
 		return;								
 		}
@@ -334,11 +365,129 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 	printf("Hereend" );	
 }
 // this method will calculated output according to pipes
-void IPCPipes(char *args[100],char paths[100],int args_len){
+void IPCPipes(char *args[100],char paths[100],int *args_len, int path_len, char *path[100]){
 	// output from a process A  is the input to process B
 	// ls -la | ps
 	// 
 	printf("%s\n", "we are in pipes");
+	int p[2],status;
+	pid_t childTerm;
+	int pipe_flag=0;
+	char * left_arg[100];
+	char * right_arg[100];
+	char *lschar[100]={"ls",NULL};
+	char *morechar[100]={"less", NULL};
+	int left_num=0;
+	int right_num=0;
+	int i=0;
+	for(;i<*args_len-1;i++)
+	{
+		if(strncmp(args[i],"|",1)==0)
+		{
+			pipe_flag=1;
+		}
+		else {
+			if(!pipe_flag)
+			{
+				left_arg[left_num++]=args[i];
+			}
+			else 
+			{
+				right_arg[right_num++]=args[i];
+			}
+		}
+	}
+	left_arg[left_num]="\0";
+	right_arg[right_num]="\0";
+	char * path_to_file=malloc(1000);
+	char * path_to_right=malloc(1000);
+	i=0;
+	int found_left=0;
+	int found_right=0;
+	for(;i<path_len;i++)
+	{
+		if(!found_left)
+		{
+			printf("path is %s\n",path[i]);
+			strcpy(path_to_file,path[i]);
+			strcat(path_to_file,"/");
+			strcat(path_to_file,left_arg[0]);
+			printf("%s\n",path_to_file);
+			if(check_file(path_to_file)==1)
+			{
+				printf("hi found left \n");
+				found_left=1;
+			}
+			else
+			{
+				free(path_to_file);
+				char * path_to_file=malloc(1000);
+			}
+		}
+
+		if(!found_right)
+		{
+			printf("path is %s\n",path[i]);
+			strcpy(path_to_right,path[i]);
+			strcat(path_to_right,"/");
+			strcat(path_to_right,right_arg[0]);
+			printf("%s\n",path_to_right);
+			if(check_file(path_to_right)==1)
+			{
+				found_right=1;
+			}
+			else
+			{
+				free(path_to_right);
+				char * path_to_right=malloc(1000);
+			}
+			
+		}
+	}
+	printf("%s %s\n", path_to_file, path_to_right);
+	if(found_left==1 && found_right==1)
+	{
+		pid_t child = fork();
+		if(child<0)
+		{
+			printf("Error!!\n");
+		}
+		else if(child==0)
+		{
+			printf("In child\n");
+			pipe(p);
+			pid_t child2=fork();
+			if(child2<0){
+				printf("Error!!\n");
+			}
+			if(child2==0){
+				printf("Child's Child\n");
+				int old_std=dup(1);
+				dup2(p[1], 1);
+				close(p[1]);
+				if(execv(path_to_file,left_arg) < 0)
+				{
+					printf("exec failed\n");
+				}
+				dup2(old_std,1);
+				close(old_std);
+			}
+			else {
+				printf("Child II \n");
+				pid_t a = wait(&status);
+				int old_stdin=dup(0);
+				dup2(p[0], 0);
+				close(p[0]);
+				if(execv(path_to_right,right_arg) < 0)
+				{
+					printf("exec failed\n");
+				}
+				dup2(old_stdin,0);
+				close(old_stdin);
+			}
+		}
+		waitpid(childTerm, &status, WUNTRACED);
+	}
 }
 
 // this method will print the history 
@@ -423,6 +572,7 @@ int main(){
    	 		int flag_to=0;																		//infinite while loop starting
 			args_len = 0;
 			path_len=0;
+			int pipe_flag2=0;
 
 			printf(">>>>>>>");
 			path_temp=getenv("MYPATH");
@@ -441,9 +591,10 @@ int main(){
 			// if(choice==){
 			// 	continue;
 			// }
-			//printf("%s\n",choice);
-			PreArgsProcessing(args,paths,&args_len,choice,args_temp);
+			printf("main choice%s\n",choice);
 			historyChecking(history,&history_index,choice, historyflag);
+			PreArgsProcessing(args,paths,&args_len,choice,args_temp);
+			
 			struct dirent * file;
 			//================================================================================================================
 																				
@@ -456,18 +607,18 @@ int main(){
 				printf("bye\n");
 				exit(0);
 			}
-			// if(strncmp(args[args_len-2],"&",1)==0){		
-   //  			printf( "found %s\n", args[args_len-2] );									//Background command 
-			// 	BackgroundProcesses(args,paths,args_len);
-			// 	flag=1;
-			// 	break;	
-			// }
-			// 												// checking for paramater to verify the arguments                     
-		 // 	else if(strncmp(args[0],"cd",2)==0){		
-	  //   			//printf( "found %s\n", args[1] );									// cd command 
-			// 		cdProcessing(args,paths,args_len);
-			// 		break;	
-			// }
+			if(strncmp(args[args_len-2],"&",1)==0){		
+    			printf( "found %s\n", args[args_len-2] );									//Background command 
+				BackgroundProcesses(args,paths,args_len);
+				flag=1;
+				continue;	
+			}
+															// checking for paramater to verify the arguments                     
+		 	else if(strncmp(args[0],"cd",2)==0){		
+	    			//printf( "found %s\n", args[1] );									// cd command 
+					cdProcessing(args,paths,args_len);
+					continue;	
+			}
 			// checking for various commands
 			for(int i=0;i<args_len-1;i++){
 				if(strncmp(args[i],"!",1)==0){		
@@ -484,14 +635,13 @@ int main(){
 				
 				if(strncmp(args[i],"|",1)==0){		
 					//printf( "found %s\n", args[1] );									// pipe command 
-					IPCPipes(args,paths,args_len);
+					IPCPipes(args,paths,&args_len,path_len,path);
 					flag=1;
 					break;
 				}
-			//printf("%d\n",i);
 			}
 			
-			if(flag & !flag_to){
+			if(flag & !flag_to & !pipe_flag2){
 				// the commands left at the end will be executed
 				//printf("%d\n",flag );
 				newpath=checkingParamter(args,paths,args_len,path,dir,path_len,file,newpath);
@@ -502,7 +652,7 @@ int main(){
 					forkMethod(args,paths,args_len);
 				}	
 			}
-			if(!flag & !flag_to){
+			if(!flag & !flag_to & !pipe_flag2){
 				// the commands left at the end will be executed
 				//printf("%d\n",flag );
 				newpath=checkingParamter(args,paths,args_len,path,dir,path_len,file,newpath);
