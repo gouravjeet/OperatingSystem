@@ -154,7 +154,7 @@ void PreArgsProcessing(char *args[100],char paths[100],int *args_len,char *choic
 				printf("These are args: %d %s\n", i, args[i]);
 			}
 }
-void runExclamationCommand(char *args[100],char paths[100],int args_len,char history[1000][1000],char *choice,char *args_temp){
+void runExclamationCommand(char *args[100],char paths[100],int args_len,char history[1000][1000],char *choice,char *args_temp,int *history_index){
 	// run the command with ! followed either by the name of command or by the number of the command
 	char temp4[1000];
 	memset(temp4, ' ', 1000);
@@ -173,6 +173,12 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 	else if(isalpha(command[0])){								//string
 		//printf("%s\n", command);
 		args[0]=command;
+		for(int k=0;k<*history_index;k++){
+			if(choice==history[*history_index]){
+				PreArgsProcessing(args,paths,&args_len,choice,args_temp);
+				return;
+			}
+		}
 		printf("%s\n",args[0]);
 		strcpy(temp4,args[0]);
 		strcat(temp4," ");
@@ -190,8 +196,12 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 		printf("out of the loop%s\n",temp4);
 		strcpy(choice,temp4);
 		choice=trimwhitespace(choice);
-		PreArgsProcessing(args,paths,&args_len,choice,args_temp);
-		printf("Exclamation choice is %s\n",choice );
+		
+
+		
+		
+
+		// /printf("Exclamation args is %s\n",args[] );
 		//forkMethod(args,paths,args_len);
 	}	
 }
@@ -393,12 +403,14 @@ void IPCPipes(char *args[100],char paths[100],int *args_len, int path_len, char 
 			}
 			else 
 			{
+				printf("heeee %s %d\n",args[i],right_num);
+
 				right_arg[right_num++]=args[i];
 			}
 		}
 	}
-	left_arg[left_num]="\0";
-	right_arg[right_num]="\0";
+	left_arg[left_num]=NULL;
+	right_arg[right_num]=NULL;
 	char * path_to_file=malloc(1000);
 	char * path_to_right=malloc(1000);
 	i=0;
@@ -461,7 +473,8 @@ void IPCPipes(char *args[100],char paths[100],int *args_len, int path_len, char 
 				printf("Error!!\n");
 			}
 			if(child2==0){
-				printf("Child's Child\n");
+				printf("Child's Child %s\n", path_to_file);
+				//execv(path_to_file,left_arg);
 				int old_std=dup(1);
 				dup2(p[1], 1);
 				close(p[1]);
@@ -480,7 +493,7 @@ void IPCPipes(char *args[100],char paths[100],int *args_len, int path_len, char 
 				close(p[0]);
 				if(execv(path_to_right,right_arg) < 0)
 				{
-					printf("exec failed\n");
+					printf("exec failed right %s ddddd\n",path_to_right);
 				}
 				dup2(old_stdin,0);
 				close(old_stdin);
@@ -623,7 +636,7 @@ int main(){
 			for(int i=0;i<args_len-1;i++){
 				if(strncmp(args[i],"!",1)==0){		
 	    			printf( "found %s\n", args[0] );									// Exclamation command 
-					runExclamationCommand(args,paths,args_len,history,choice,args_temp);
+					runExclamationCommand(args,paths,args_len,history,choice,args_temp,&history_index);
 					flag=1;
 					break;	
 				}
