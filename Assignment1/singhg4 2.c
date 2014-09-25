@@ -12,16 +12,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <fcntl.h>
-void sig_chld(int signo)
-{
-    pid_t pid;
-    int stat;
-    while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0)
-    {
-       printf("[process %d completed]\n", pid); 
-    }
-    return;
-}
+
 int check_file(char * fileName){ 
 	struct stat buf; 
 	int rc = lstat(fileName, &buf );  
@@ -83,7 +74,7 @@ char* checkingParamter(char *args[100],char paths[100],int args_len,char *path[1
 		}
 		else{
 			//checking various commands in /bin folder
-			//printf( "found %s\n", file->d_name );
+			printf( "found %s\n", file->d_name );
 			strcpy(paths,path[i]);
 			strcat(paths,"/");
 			strcat(paths,file->d_name);
@@ -132,9 +123,9 @@ void cdProcessing(char *args[100],char paths[100],int args_len){
 	int ret;
 	ret = chdir (directory);
 	if (ret ==0) 										// to check that chdir() is working or not//
-		//printf("Your current directory is %s\n",args[1] );
+		printf("Your current directory is %s\n",args[1] );
 	else
-		//printf("%s Directory doesnot exists\n",args[1]);
+		printf("%s Directory doesnot exists\n",args[1]);
 }
 
 void historyChecking(char history[1000][1000], int *history_index,char *choice,bool historyflag){
@@ -246,7 +237,7 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 	//printf("dara" );
 	for(int i=0;i<args_len-1;i++){
 		if(strncmp(args[i],"<",1)==0){
-			//printf("Redirect from file.\n");
+			printf("Redirect from file.\n");
 			//int fd_stored=dup(0);
 			//close(0);
 			int fname;
@@ -292,17 +283,17 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 		//printf("ss\n");
 			// case 2: cmd1 >> stdout.txt  append the response of the command 1 to teh text file
 		else if(strncmp(args[i],">>",2)==0){
-			//printf("Append to file");
+			printf("Append to file");
 			*flag_to=1;
 			int dm=dup(1);
 			char * b;
 			int h;
 			//close(1);
 			for(int m=0;m<args_len-1;m++){
-				//printf("argument are %s\n",args[m] ); 
+				printf("argument are %s\n",args[m] ); 
 		
 			}
-			h=open(args[i+1],O_APPEND | O_WRONLY, 0777);
+			h=open(args[i+1],O_APPEND | O_WRONLY, 0660);
 			if(h<0){
 				printf("ERROR: no such file to append to%s\n",args[i+1] );
 				return;
@@ -355,7 +346,7 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 			     // then the program writes to stdout ie fd 1 and hence in this case it is file 
 		else if(strncmp(args[i],">",1)==0){						
 			*flag_to=1;
-	 		//printf("Redirect to file\n");
+	 		printf("Redirect to file\n");
 			int dv=dup(1);
 			char * b;
 			int z;
@@ -517,7 +508,7 @@ void IPCPipes(char *args[100],char paths[100],int *args_len, int path_len, char 
 				close(p[1]);
 				if(execv(path_to_file,left_arg) < 0)
 				{
-					printf("Command not found\n");
+					printf("exec failed\n");
 					exit(0);
 				}
 				
@@ -677,7 +668,7 @@ int main(){
 				exit(0);
 			}
 			if(strncmp(args[args_len-2],"&",1)==0){		
-    			//printf( "found %s\n", args[args_len-2] );
+    			printf( "found %s\n", args[args_len-2] );
     												//Background command 
 				BackgroundProcesses(args,paths,args_len);
 				flag=1;

@@ -12,16 +12,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <fcntl.h>
-void sig_chld(int signo)
-{
-    pid_t pid;
-    int stat;
-    while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0)
-    {
-       printf("[process %d completed]\n", pid); 
-    }
-    return;
-}
+
 int check_file(char * fileName){ 
 	struct stat buf; 
 	int rc = lstat(fileName, &buf );  
@@ -131,10 +122,7 @@ void cdProcessing(char *args[100],char paths[100],int args_len){
 	char *directory = args[1];
 	int ret;
 	ret = chdir (directory);
-	if (ret ==0) 										// to check that chdir() is working or not//
-		//printf("Your current directory is %s\n",args[1] );
-	else
-		//printf("%s Directory doesnot exists\n",args[1]);
+	
 }
 
 void historyChecking(char history[1000][1000], int *history_index,char *choice,bool historyflag){
@@ -176,18 +164,18 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 	// run the command with ! followed either by the name of command or by the number of the command
 	char temp4[1000];
 	memset(temp4, ' ', 1000);
-	printf("%s\n","run exclamation" );
+	//printf("%s\n","run exclamation" );
 	char command[100];
 	char cmd[100];
 	sscanf(args[0] ,"!%s ", command);
-	printf("%s\n", command);
+	//printf("%s\n", command);
 	if(isdigit(command[0])){								// integer
 		int num = atoi(command);
 		printf("%d\n", num);
 		for(int k=0;k<*history_index;k++){
 			printf("%d\n",k );
 			if(num==*history_index){
-				printf("Number found%d\n",num );
+				//printf("Number found%d\n",num );
 				PreArgsProcessing(args,paths,&args_len,choice,args_temp);
 				return;
 			}
@@ -204,21 +192,21 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 				return;
 			}
 		}
-		printf("%s\n",args[0]);
+		//printf("%s\n",args[0]);
 		strcpy(temp4,args[0]);
 		strcat(temp4," ");
-		printf("%d\n",args_len);
-		printf("%s\n",temp4);
+		//printf("%d\n",args_len);
+		//printf("%s\n",temp4);
 		for(int o=1;o<args_len-2;o++){
 			strcat(temp4,args[o]);
 			strcat(temp4," ");
-			printf("in loop%s\n",temp4);
+			//printf("in loop%s\n",temp4);
 		}
 		if(args_len>2){
 			strcat(temp4,args[args_len-2]);
 		}
 		
-		printf("out of the loop%s\n",temp4);
+		//printf("out of the loop%s\n",temp4);
 		strcpy(choice,temp4);
 		choice=trimwhitespace(choice);
 		// /printf("Exclamation args is %s\n",args[] );
@@ -302,7 +290,7 @@ void Redirection(char *args[100],char paths[100],int args_len,char *choice,char 
 				//printf("argument are %s\n",args[m] ); 
 		
 			}
-			h=open(args[i+1],O_APPEND | O_WRONLY, 0777);
+			h=open(args[i+1],O_APPEND | O_WRONLY, 0660);
 			if(h<0){
 				printf("ERROR: no such file to append to%s\n",args[i+1] );
 				return;
@@ -677,7 +665,7 @@ int main(){
 				exit(0);
 			}
 			if(strncmp(args[args_len-2],"&",1)==0){		
-    			//printf( "found %s\n", args[args_len-2] );
+    			printf( "found %s\n", args[args_len-2] );
     												//Background command 
 				BackgroundProcesses(args,paths,args_len);
 				flag=1;
