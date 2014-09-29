@@ -176,18 +176,18 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 	// run the command with ! followed either by the name of command or by the number of the command
 	char temp4[1000];
 	memset(temp4, ' ', 1000);
-	printf("%s\n","run exclamation" );
+	//printf("%s\n","run exclamation" );
 	char command[100];
 	char cmd[100];
 	sscanf(args[0] ,"!%s ", command);
-	printf("%s\n", command);
+	//printf("%s\n", command);
 	if(isdigit(command[0])){								// integer
 		int num = atoi(command);
 		printf("%d\n", num);
 		for(int k=0;k<*history_index;k++){
 			printf("%d\n",k );
 			if(num==*history_index){
-				printf("Number found%d\n",num );
+				//printf("Number found%d\n",num );
 				PreArgsProcessing(args,paths,&args_len,choice,args_temp);
 				return;
 			}
@@ -204,21 +204,21 @@ void runExclamationCommand(char *args[100],char paths[100],int args_len,char his
 				return;
 			}
 		}
-		printf("%s\n",args[0]);
+		//printf("%s\n",args[0]);
 		strcpy(temp4,args[0]);
 		strcat(temp4," ");
-		printf("%d\n",args_len);
-		printf("%s\n",temp4);
+		//printf("%d\n",args_len);
+		//printf("%s\n",temp4);
 		for(int o=1;o<args_len-2;o++){
 			strcat(temp4,args[o]);
 			strcat(temp4," ");
-			printf("in loop%s\n",temp4);
+			//printf("in loop%s\n",temp4);
 		}
 		if(args_len>2){
 			strcat(temp4,args[args_len-2]);
 		}
 		
-		printf("out of the loop%s\n",temp4);
+		//printf("out of the loop%s\n",temp4);
 		strcpy(choice,temp4);
 		choice=trimwhitespace(choice);
 		// /printf("Exclamation args is %s\n",args[] );
